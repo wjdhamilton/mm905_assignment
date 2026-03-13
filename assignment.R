@@ -21,12 +21,17 @@ ln_cattle <- log(cattle)
 # Look for major economic events - COVID; flash crash. What changed in 2014?
 
 # Clearly non-stationary
+acf(ln_cattle, main = "ACF of log(cattle)") # Very obviously non-stationary
 adf.test(ln_cattle) # p = 0.958, no evidence against stationarity
 
 # Diff series
 ln_cattle_d <- diff(ln_cattle)
 plot(ln_cattle_d)
 ln_cattle_d[1] <- 0
+
+# Stationarity of diffed series
+# Looks pretty stationary, but let's check with Dickey-Fuller
+adf.test(ln_cattle_d) # p < 0.01, accept stationarity
 
 # Descriptive stats
 library(TSA)
@@ -44,20 +49,24 @@ ks.test(coredata(ln_cattle_d), x) # p-value 7.661e-07
 qqnorm(ln_cattle_d)
 qqline(x, col = "red", lwd = 2)
 
-# VaR calculations
+# TODO: VaR calculations
 library(PerformanceAnalytics)
-
-# Stationarity
-# Looks pretty stationary, but let's check with Dickey-Fuller
-adf.test(ln_cattle_d) # p < 0.01, accept stationarity
-
 
 par(mfrow = c(2, 2))
 # So, if we want to use stationary models we must work with the diffed series.
-a <- acf(ln_cattle_d, ylim = c(-1, 1), main = "ACF")
-a
+a <- acf(ln_cattle_d,  plot = FALSE)
+plot(a, ylim = c(-0.2, 0.2), main = "ACF")
 p <- pacf(ln_cattle_d, ylim = c(-0.2, 0.2), main = "PACF")
 
-# Merest hint of a significnt lag at k=1.
-ma1 <- arima(ln_cattle_d, order = c(0,0,1))
-ma1
+library(forecast)
+par(mfrow = c(1,1))
+# ACF and PACF are almost identical, but with a slightly significant 
+# autocorrelation at lag 1. Try ARIMA(1,1,1)
+c <- as.numeric(cattle)
+model <- Arima(c, c(1, 1, 1))
+fc <- forecast(model, h = 12)
+plot(fc, include = 100)
+
+# Look at residuals
+res <- residuals(model)
+plot(residuals)
