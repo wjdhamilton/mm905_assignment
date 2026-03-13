@@ -26,10 +26,9 @@ adf.test(ln_cattle) # p = 0.958, no evidence against stationarity
 
 # Diff series
 ln_cattle_d <- diff(ln_cattle)
-plot(ln_cattle_d)
-ln_cattle_d[1] <- 0
 
 # Stationarity of diffed series
+plot(ln_cattle_d)
 # Looks pretty stationary, but let's check with Dickey-Fuller
 adf.test(ln_cattle_d) # p < 0.01, accept stationarity
 
@@ -51,22 +50,34 @@ qqline(x, col = "red", lwd = 2)
 
 # TODO: VaR calculations
 library(PerformanceAnalytics)
+VaR(ln_cattle_d, p = 0.95, type = "historical") #-0.01639114
+VaR(ln_cattle_d, p = 0.99, type = "historical") #-0.02985331
 
+# Look at ACF and PACF to determine if it's white noise, and the type of model
+# that may be applicable
 par(mfrow = c(2, 2))
-# So, if we want to use stationary models we must work with the diffed series.
 a <- acf(ln_cattle_d,  plot = FALSE)
-plot(a, ylim = c(-0.2, 0.2), main = "ACF")
+plot(a, ylim = c(-0.2, 0.2), main = "ACF") # Because acf doesn't use the ylim keyword.
 p <- pacf(ln_cattle_d, ylim = c(-0.2, 0.2), main = "PACF")
 
-library(forecast)
-par(mfrow = c(1,1))
-# ACF and PACF are almost identical, but with a slightly significant 
+# ACF and PACF are almost identical, but with a slightly significant
 # autocorrelation at lag 1. Try ARIMA(1,1,1)
+
+library(forecast)
+par(mfrow = c(1, 1))
 c <- as.numeric(cattle)
 model <- Arima(c, c(1, 1, 1))
 fc <- forecast(model, h = 12)
 plot(fc, include = 100)
+# Rubbish prediction/model. Let's look at the residuals
 
 # Look at residuals
+par(mfrow = c(2, 3))
 res <- residuals(model)
-plot(residuals)
+plot(res)
+# The plot appears stationary, except that the variance seems to grow over time
+adf.test(res) # p < 0.01, accept stationarity
+pacf(res, main = "PACF of Residuals")
+acf(res, main = "ACF of Residuals")
+# The residuals look like white noise, but need to double check with Ljung-Box
+Box.test(res, type = "Ljung-Box") # p = 0.8434, accept white noise.
