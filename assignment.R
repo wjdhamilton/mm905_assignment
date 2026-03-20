@@ -83,8 +83,8 @@ ma <- Arima(c, c(0, 1, 1))
 ma_fc <- forecast(ma, h = 12)
 plot(ma_fc, include = 100)
 
-arma <- Arima(c, c(1, 1, 1))
-fc <- forecast(arma, h = 12)
+arima <- Arima(c, c(1, 1, 1))
+fc <- forecast(arima, h = 12)
 plot(fc, include = 100)
 # Rubbish prediction/model. Let's look at the residuals
 ar_res <- residuals(ar)
@@ -92,7 +92,7 @@ ma_res <- residuals(ma)
 
 # Look at residuals
 par(mfrow = c(2, 3))
-arima_res <- residuals(arma)
+arima_res <- residuals(arima)
 plot(arima_res)
 # The plot appears stationary, except that the variance seems to grow over time
 adf.test(arima_res) # p < 0.01, accept stationarity
@@ -108,3 +108,12 @@ Box.test(arima_res, type = "Ljung-Box") # p = 0.8434, accept white noise.
 
 # Check for seasonality
 stl(ln_cattle_d[-1], s.window = "seasonal") # so unseasonal it throws an error!
+
+# Try and fit a garch model. We need the PACF of the squared series to estimate
+# the order.
+res_squared <- arima_res^2
+# check res_squared isn't white noise
+Box.test(res_squared, type = "Ljung-Box")
+pacf(res_squared) # p-value < 2.2e-16; reject white noise
+# Try a GARCH model
+# library(rugarch)
