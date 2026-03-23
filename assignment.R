@@ -3,7 +3,7 @@ library(tseries)
 
 # Data acquisition and setup
 moo               <- read.csv("cattle_futures.csv")
-index             <- as.Date(moo[[1]], format = "%d/%m/%Y")
+index             <- as.Date(moo[[1]], format = "%m/%d/%Y %H:%M:%S")
 cow_prices        <- as.numeric(moo[[2]]) |> unname()
 cattle            <- xts(cow_prices, order.by = index)
 colnames(cattle)  <- "daily"
